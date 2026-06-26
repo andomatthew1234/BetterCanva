@@ -6,7 +6,7 @@
 
 ## 🚀 Feature Showcase
 
-[![Watch the video](https://github.com/andomatthew1234/BetterCanva/blob/main/docs/FINAL.mp4)](https://github.com/andomatthew1234/BetterCanva/blob/main/docs/FINAL.mp4)
+[![Watch the video](https://youtu.be/6c3YPSgIx-k)](https://youtu.be/6c3YPSgIx-k)
 
 *Click the video above to see BetterCanva in action.*
 
