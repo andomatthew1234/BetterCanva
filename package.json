@@ -1,0 +1,14 @@
+{
+  "name": "BetterCanva",
+  "version": "1.0.0",
+  "description": "It's Canva but better. Simple as that.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "andomatthew1234",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^29.0.0" 
+  }
+}

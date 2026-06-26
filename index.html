@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html class="theme-system">
+<head>
+  <meta charset="UTF-8">
+  <title>BetterCanva</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app-splash">
+    <img src="assets/loading.gif" alt="Loading Canva..." class="splash-gif">
+  </div>
+
+  <div id="loading-bar"></div>
+
+  <div id="tab-bar">
+    <div id="tabs-container"></div>
+    <button id="new-tab-btn" title="New Tab">+</button>
+    <button id="lucid-search-btn" title="LucidSearch (Ctrl+Alt+Space)">🔎</button>
+    <button id="folder-btn" title="Open Uploads Folder">📁</button>
+    <button id="info-btn" title="BetterCanva Launcher">🚀</button>
+    <button id="history-btn" title="Export History">🕒</button>
+    <button id="settings-btn" title="Settings">🛠️</button>
+  </div>
+
+  <div id="settings-overlay" class="hidden"></div>
+
+  <div id="settings-menu" class="hidden">
+    <div class="setting-item">
+      <label>Tab bar appearance</label>
+      <div class="custom-select" id="theme-dropdown">
+        <div class="select-selected">System</div>
+        <div class="select-items select-hide">
+          <div data-value="system">System</div>
+          <div data-value="light">Basic white</div>
+          <div data-value="dark">Basic black</div>
+          <div data-value="terminal">Terminal</div>
+          <div data-value="canva-glow">Canva glow</div>
+          <div data-value="sky-blues">Sky blues</div>
+          <div data-value="gaming-legacy">Gaming Legacy</div>
+          <div data-value="celebration">Celebration (Click me!)</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="setting-divider"></div>
+    
+    <button class="menu-btn" id="zen-mode-btn">🖼️ Focus Canvas (Zen Mode)</button>
+
+    <!-- UI ALIGNED: Startup Behavior Toggle -->
+    <div class="setting-item toggle-item">
+      <label for="startup-toggle">Launch Dashboard on start</label>
+      <label class="switch" title="Toggle Startup Page">
+        <input type="checkbox" id="startup-toggle">
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <!-- NEW: Quick Start Toggle -->
+    <div class="setting-item toggle-item">
+      <label for="quick-start-toggle">Quick Start (Run in background)</label>
+      <label class="switch" title="Keep app running when closed">
+        <input type="checkbox" id="quick-start-toggle">
+        <span class="slider round"></span>
+      </label>
+    </div>
+  </div>
+
+  <div id="main-wrapper">
+    <div id="history-sidebar" class="hidden">
+      <div class="sidebar-header">
+        <span>Export Tracking</span>
+        <label class="switch" title="Toggle Export Tracking">
+          <input type="checkbox" id="export-history-toggle">
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div id="history-list">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+    
+    <div id="views-container">
+      <div id="preview-overlay" class="hidden">
+        <div class="preview-toolbar">
+          <button id="close-preview-btn">← Back to Canva</button>
+          <span id="preview-title">Version 1 Preview</span>
+        </div>
+        <div id="preview-content"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- GLOBAL LUCIDSEARCH OVERLAY -->
+  <div id="lucid-backdrop" class="hidden">
+    <div class="lucid-wrapper" id="lucid-wrapper">
+      <span class="lucid-icon">🔎</span>
+      <input type="text" id="lucid-input" placeholder="Type anything. Search anything. Launch a design..." autocomplete="off" spellcheck="false">
+      <div class="lucid-dropdown hidden" id="lucid-dropdown">
+        <!-- Search Results Injected Here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

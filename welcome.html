@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BetterCanva Launcher</title>
+  <style>
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-main: #ffffff;
+      --text-muted: #a0a0a0;
+      --accent: #00C4CC;
+      --accent-alt: #7D2AE8;
+      --time-grad: linear-gradient(90deg, #00C4CC, #7D2AE8); 
+    }
+
+    body, html {
+      margin: 0; padding: 0; height: 100vh; overflow-x: hidden; overflow-y: auto;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text-main);
+      background-color: #0d0e12;
+      background-image: url('assets/bg_light.png');
+      background-size: cover; background-position: center; background-attachment: fixed;
+    }
+    
+    /* Removes focus outline from the body when we force-focus it on boot */
+    body:focus { outline: none; }
+
+    body::-webkit-scrollbar { width: 8px; }
+    body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    @media (prefers-color-scheme: dark) { body, html { background-image: url('assets/bg_dark.png'); } }
+
+    /* --- DYNAMIC HEADER --- */
+    .header-container { text-align: center; margin-top: 50px; margin-bottom: 24px; height: 60px; position: relative; z-index: 5; }
+
+    .title-gradient {
+      font-size: 42px; font-weight: 800; letter-spacing: -1px; margin: 0;
+      background: var(--time-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 15px rgba(0, 0, 0, 0.2)); display: inline-block;
+    }
+    .title-gradient::after {
+      content: '|'; color: var(--text-main); -webkit-text-fill-color: var(--text-main);
+      animation: blink 1s step-end infinite; margin-left: 4px;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* --- GLOBAL SPOTLIGHT SEARCH UI --- */
+    .search-backdrop {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 90; opacity: 1; transition: opacity 0.3s ease; pointer-events: auto;
+    }
+    .search-backdrop.hidden { opacity: 0; pointer-events: none; }
+
+    .search-wrapper {
+      max-width: 600px; margin: 0 auto 40px auto; position: relative;
+      border-radius: 20px; transform: translateZ(20px); z-index: 100;
+    }
+    
+    .search-wrapper::before {
+      content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+      background: var(--time-grad); border-radius: 22px; z-index: -1; opacity: 0; filter: blur(12px); transition: opacity 0.4s ease;
+    }
+    @keyframes breatheGlow { 0% { opacity: 0.5; filter: blur(10px); } 100% { opacity: 1; filter: blur(18px); } }
+    
+    /* Active State Glow */
+    .search-wrapper.active-search::before { animation: breatheGlow 1.5s alternate infinite ease-in-out; opacity: 1; }
+
+    .search-icon {
+      position: absolute; left: 20px; top: 16px; font-size: 18px; pointer-events: none; 
+      color: var(--text-muted); transition: color 0.3s ease; z-index: 10;
+    }
+    .search-wrapper.active-search .search-icon { color: white; }
+
+    .search-input {
+      width: 100%; padding: 16px 24px 16px 52px; background: rgba(0,0,0,0.4);
+      border: 1px solid var(--glass-border); border-radius: 20px; color: white;
+      font-size: 15px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      outline: none; box-sizing: border-box; transition: all 0.2s ease; font-family: inherit;
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+    
+    /* Morph shape when results open */
+    .search-wrapper.has-results .search-input {
+      border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent;
+      background: rgba(15, 15, 20, 0.95); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+    .search-wrapper.active-search .search-input { background: rgba(15, 15, 20, 0.95); }
+
+    /* The Results Dropdown Segment */
+    .search-dropdown {
+      position: absolute; top: 100%; left: 0; width: 100%;
+      background: rgba(15, 15, 20, 0.95); border: 1px solid var(--glass-border); border-top: none;
+      border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      max-height: 400px; overflow-y: auto; box-sizing: border-box;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 99; padding-bottom: 8px;
+    }
+    .search-dropdown.hidden { display: none; }
+    .search-dropdown::-webkit-scrollbar { width: 6px; }
+    .search-dropdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+    /* Result Items */
+    .search-result-item {
+      display: flex; align-items: center; padding: 12px 20px; gap: 16px;
+      cursor: pointer; transition: background 0.1s; color: var(--text-main);
+      border-left: 3px solid transparent; margin: 4px 8px; border-radius: 8px;
+    }
+    /* Hover OR Keyboard Arrow Navigation Active State */
+    .search-result-item:hover, .search-result-item.keyboard-active {
+      background: rgba(0, 196, 204, 0.15); border-left: 3px solid var(--accent);
+    }
+    
+    .sr-icon { font-size: 24px; display: flex; justify-content: center; align-items: center; width: 44px; }
+    .sr-img { width: 44px; height: 32px; border-radius: 4px; object-fit: cover; background: #222; }
+    .sr-details { display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; }
+    .sr-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sr-type { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; font-weight: 700;}
+    .sr-empty { padding: 24px; text-align: center; color: var(--text-muted); font-size: 14px; }
+
+
+    /* --- BENTO BOX GRID --- */
+    .dashboard {
+      display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(320px, auto);
+      gap: 24px; max-width: 1200px; margin: 0 auto 60px auto; padding: 0 40px; position: relative; z-index: 5;
+    }
+
+    .glass-card {
+      background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border); border-radius: 24px; padding: 24px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      display: flex; flex-direction: column; position: relative;
+      transform-style: preserve-3d; transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1);
+      transition: transform 0.1s ease, box-shadow 0.1s ease; will-change: transform;
+    }
+
+    .glare {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 24px; pointer-events: none; z-index: 10;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s ease;
+    }
+
+    .card-title { font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; transform: translateZ(20px); }
+
+    /* 3D PRESS SELECT ANIMATION */
+    @keyframes selectPop {
+      0% { transform: scale(1) translateZ(15px); box-shadow: 0 0 0 rgba(0, 196, 204, 0); }
+      50% { transform: scale(0.92) translateZ(0px); box-shadow: 0 0 20px rgba(0, 196, 204, 0.6); background: rgba(0, 196, 204, 0.2); }
+      100% { transform: scale(1) translateZ(15px); box-shadow: 0 0 0 rgba(0, 196, 204, 0); }
+    }
+    .anim-select { animation: selectPop 0.3s cubic-bezier(0.1, 0.8, 0.3, 1) !important; }
+
+    /* BENTO POSITIONING */
+    .card-recent { grid-column: span 2; height: 360px; }
+    .card-quick { grid-column: span 1; grid-row: span 2; height: 100%; } 
+    .card-themes { grid-column: span 1; height: 360px; }
+    .card-uploads { grid-column: span 1; height: 360px; }
+
+    /* --- RECENT DESIGNS WIDGET --- */
+    .recent-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 8px; transform: translateZ(15px); }
+    .recent-item { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; }
+    .recent-item:hover { border-color: var(--accent); transform: translateY(-4px) translateZ(15px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    .recent-img { width: 100%; height: 110px; object-fit: cover; background: linear-gradient(135deg, #222, #111); display: flex; justify-content: center; align-items: center; font-size: 24px; color: #555; }
+    .recent-title { padding: 12px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+    .loading-state { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 14px; grid-column: 1 / -1; padding: 20px 0; }
+
+    /* --- QUICK CREATE WIDGET --- */
+    .quick-create-grid { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; overflow-y: auto; padding-right: 4px; transform: translateZ(15px); }
+    .quick-create-grid::-webkit-scrollbar { width: 6px; }
+    .quick-create-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    .qc-btn { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main); cursor: pointer; display: flex; align-items: center; font-size: 14px; transition: 0.2s; padding: 16px; font-weight: 600; gap: 16px; }
+    .qc-btn:hover { border-color: var(--accent); background: rgba(0, 196, 204, 0.1); box-shadow: 0 4px 15px rgba(0, 196, 204, 0.15); padding-left: 24px; }
+    .qc-icon { font-size: 24px; }
+
+    /* --- UPLOADS & THEMES --- */
+    .file-list { flex-grow: 1; overflow-y: auto; margin-bottom: 16px; padding-right: 8px; transform: translateZ(15px); }
+    .file-list::-webkit-scrollbar { width: 6px; }
+    .file-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    .file-item { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    .file-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+    .btn-icon { background: none; border: none; color: #ff4444; cursor: pointer; font-size: 16px; transition: 0.2s; }
+    .btn-icon:hover { color: #ff0000; transform: scale(1.2); }
+    .btn-secondary { width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; font-size: 14px; margin-top: 8px; transform: translateZ(20px); background: rgba(255,255,255,0.1); color: white; }
+    .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+    .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow-y: auto; flex-grow: 1; padding-right: 4px; transform: translateZ(15px); }
+    .theme-grid::-webkit-scrollbar { display: none; }
+    .theme-btn { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; transition: 0.2s; }
+    .theme-btn:hover { border-color: var(--accent); transform: scale(1.02); }
+    .theme-preview { height: 32px; border-radius: 6px; width: 100%; }
+    .theme-name { font-size: 11px; color: var(--text-main); text-align: center; }
+    .prev-dark { background: #18191b; border: 1px solid #333; }
+    .prev-light { background: #ffffff; border: 1px solid #ddd; }
+    .prev-terminal { background: #000; border-bottom: 2px solid #0f0; }
+    .prev-canva { background: linear-gradient(90deg, #00C4CC, #7D2AE8); }
+    .prev-sky { background: linear-gradient(135deg, #87ceeb, #4682b4); }
+    .prev-gaming { background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #0000ff); }
+    .prev-celebration { background: #18191b; border: 1px solid #ff0055; position: relative; overflow: hidden; }
+    .prev-celebration::after { content: '✨'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; }
+    .btn-subtle { background: none; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline; margin-top: 15px; text-align: center; transition: color 0.2s; transform: translateZ(15px); }
+    .btn-subtle:hover { color: var(--accent); }
+
+    /* --- FOOTER & NAME EDITOR --- */
+    .footer-bar { position: fixed; bottom: 20px; right: 30px; z-index: 100; }
+    .edit-name-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(10px); color: var(--text-muted); padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+    .edit-name-btn:hover { background: rgba(255,255,255,0.1); color: white; border-color: var(--accent); }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 999; display: flex; justify-content: center; align-items: center; opacity: 1; transition: opacity 0.3s ease; }
+    .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+    .modal-card { background: #111; border: 1px solid var(--glass-border); padding: 30px; border-radius: 20px; width: 300px; text-align: center; transform: translateY(0); transition: transform 0.3s ease; }
+    .modal-overlay.hidden .modal-card { transform: translateY(20px); }
+    .modal-card input { width: 100%; box-sizing: border-box; padding: 12px; margin: 20px 0; background: #222; border: 1px solid #444; border-radius: 8px; color: white; font-size: 16px; text-align: center; }
+    .modal-card input:focus { outline: none; border-color: var(--accent); }
+    .btn-primary-modal { width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 14px; background: var(--time-grad); color: white; }
+  </style>
+</head>
+<body tabindex="-1">
+
+  <!-- Backdrop for Spotlight Search Focus -->
+  <div id="search-backdrop" class="search-backdrop hidden"></div>
+
+  <!-- Dynamic Header -->
+  <div class="header-container">
+    <h1 class="title-gradient" id="greeting-text"></h1>
+  </div>
+
+  <!-- Global Command Search (Spotlight Engine) -->
+  <div class="search-wrapper" id="search-wrapper">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="global-search" class="search-input" placeholder="Start typing to search your history and create a design..." autocomplete="off" spellcheck="false">
+    
+    <div class="search-dropdown hidden" id="search-dropdown">
+      <!-- Search Results Injected Here -->
+    </div>
+  </div>
+
+  <!-- Bento Box Layout -->
+  <div class="dashboard">
+    
+    <!-- CARD 1: RECENT DESIGNS (WIDE HERO) -->
+    <div class="glass-card card-recent">
+      <div class="glare"></div>
+      <h2 class="card-title">Workspace <span>🕒</span></h2>
+      <div class="recent-grid" id="recent-grid">
+        <div class="loading-state">Syncing local workspace memory...</div>
+      </div>
+    </div>
+
+    <!-- CARD 2: QUICK CREATE (TALL COLUMN) -->
+    <div class="glass-card card-quick">
+      <div class="glare"></div>
+      <h2 class="card-title">Launchpad <span>🚀</span></h2>
+      <div class="quick-create-grid" id="quick-create-grid">
+        <!-- Rendered by JS so it matches Search Index perfectly -->
+      </div>
+    </div>
+
+    <!-- CARD 3: THEMES (UTILITY) -->
+    <div class="glass-card card-themes">
+      <div class="glare"></div>
+      <h2 class="card-title">Themes 🎨</h2>
+      <div class="theme-grid">
+        <div class="theme-btn" onclick="applyDashboardTheme('dark', event)"><div class="theme-preview prev-dark"></div><div class="theme-name">Black</div></div>
+        <div class="theme-btn" onclick="applyDashboardTheme('light', event)"><div class="theme-preview prev-light"></div><div class="theme-name">White</div></div>
+        <div class="theme-btn" onclick="applyDashboardTheme('terminal', event)"><div class="theme-preview prev-terminal"></div><div class="theme-name">Terminal</div></div>
+        <div class="theme-btn" onclick="applyDashboardTheme('canva-glow', event)"><div class="theme-preview prev-canva"></div><div class="theme-name">Glow</div></div>
+        <div class="theme-btn" onclick="applyDashboardTheme('sky-blues', event)"><div class="theme-preview prev-sky"></div><div class="theme-name">Sky</div></div>
+        <div class="theme-btn" onclick="applyDashboardTheme('gaming-legacy', event)"><div class="theme-preview prev-gaming"></div><div class="theme-name">Gaming</div></div>
+        <div class="theme-btn" onclick="applyDashboardTheme('celebration', event)"><div class="theme-preview prev-celebration"></div><div class="theme-name">Party</div></div>
+      </div>
+      <button class="btn-subtle" onclick="toggleBanana()">Toggle Banana Injector (Beta)</button>
+    </div>
+
+    <!-- CARD 4: UPLOADS (UTILITY) -->
+    <div class="glass-card card-uploads">
+      <div class="glare"></div>
+      <h2 class="card-title">Local Uploads ☁️</h2>
+      <div class="file-list" id="file-list"></div>
+      <div>
+        <button class="btn-secondary" id="btn-open-folder">Open File Explorer</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-bar">
+    <button class="edit-name-btn" onclick="openNameModal()">📝 Edit Name</button>
+  </div>
+
+  <!-- NAME EDITOR MODAL -->
+  <div id="name-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2 style="margin-top: 0;">Creator Profile</h2>
+      <p style="color: var(--text-muted); font-size: 14px;">What should I call you?</p>
+      <input type="text" id="name-input" placeholder="Your Name" autocomplete="off" spellcheck="false">
+      <button class="btn-primary-modal" onclick="saveName()">Save & Update</button>
+    </div>
+  </div>
+
+  <script>
+    const fs = require('fs');
+    const path = require('path');
+    const os = require('os');
+    const { shell, ipcRenderer } = require('electron'); 
+
+    // ==========================================
+    // 0. ZERO-CLICK AUTOFOCUS (Window Load Capture)
+    // ==========================================
+    window.addEventListener('load', () => {
+      // Force Electron webview to grab OS keyboard focus automatically
+      window.focus();
+      document.body.focus();
+    });
+
+    // ==========================================
+    // 1. DYNAMIC GREETING ENGINE (LOCAL JSON INTEGRATION)
+    // ==========================================
+    const dataPath = path.join(__dirname, 'other', 'data.json');
+    let appData = {};
+    if (fs.existsSync(dataPath)) {
+      try { appData = JSON.parse(fs.readFileSync(dataPath, 'utf8')); } catch(e){}
+    }
+
+    let userName = appData.userName || 'Matthew';
+    const greetingEl = document.getElementById('greeting-text');
+    let typeInterval;
+
+    const greetingsBank = {
+      morning: [ "Good morning, {name}.", "Time to build something amazing, {name}.", "Fresh coffee, fresh canvas, {name}.", "Let's grab that bread, {name}.", "Early bird gets the best designs, {name}.", "Ready to create, {name}?" ],
+      afternoon: [ "Good afternoon, {name}.", "Keep the momentum going, {name}.", "Let's do some design, {name}.", "Midday creative block? You got this.", "Pushing pixels this afternoon, {name}?", "Afternoon hustle, {name}." ],
+      evening: [ "Good evening, {name}.", "Winding down with some design?", "Evening grind, let's go, {name}.", "Sunset inspiration, {name}.", "Almost quitting time, {name}. Finish strong.", "Still creating, {name}?" ],
+      night: [ "Late night grinding, {name}?", "The best ideas happen past midnight.", "Don't forget to rest your eyes, {name}.", "Midnight oil burning bright, {name}.", "Sleep is for the weak. Let's design, {name}.", "Night owl mode activated." ],
+      weekend: [ "Weekend warrior mode, {name}.", "Sunday designing? Respect, {name}.", "Saturdays are for shipping, {name}." ]
+    };
+
+    function triggerGreeting() {
+      const now = new Date();
+      const hour = now.getHours();
+      const day = now.getDay();
+      let timeBlock = 'afternoon';
+      let gradient = 'linear-gradient(90deg, #00C4CC, #7D2AE8)';
+
+      if (hour >= 5 && hour < 12) { timeBlock = 'morning'; gradient = 'linear-gradient(90deg, #FF7E5F, #FEB47B)'; }
+      else if (hour >= 12 && hour < 17) { timeBlock = 'afternoon'; }
+      else if (hour >= 17 && hour < 22) { timeBlock = 'evening'; gradient = 'linear-gradient(90deg, #ff512f, #dd2476)'; }
+      else { timeBlock = 'night'; gradient = 'linear-gradient(90deg, #00f2fe, #4facfe)'; }
+      if (day === 0 || day === 6) timeBlock = 'weekend'; 
+      
+      document.documentElement.style.setProperty('--time-grad', gradient);
+
+      const choices = greetingsBank[timeBlock];
+      const rawText = choices[Math.floor(Math.random() * choices.length)];
+      const finalText = rawText.replace('{name}', userName);
+
+      clearInterval(typeInterval);
+      greetingEl.innerHTML = '';
+      let i = 0;
+      typeInterval = setInterval(() => {
+        if (i < finalText.length) { greetingEl.innerHTML += finalText.charAt(i); i++; } 
+        else { clearInterval(typeInterval); }
+      }, 50);
+    }
+    triggerGreeting();
+
+    // Modal Logic & Secure JSON Update
+    const modal = document.getElementById('name-modal');
+    const nameInput = document.getElementById('name-input');
+    window.openNameModal = () => { nameInput.value = userName; modal.classList.remove('hidden'); setTimeout(() => nameInput.focus(), 100); };
+    
+    window.saveName = () => {
+      if(nameInput.value.trim() !== '') { 
+        userName = nameInput.value.trim(); 
+        appData.userName = userName;
+        
+        // Save to central /other/data.json
+        if (!fs.existsSync(path.dirname(dataPath))) fs.mkdirSync(path.dirname(dataPath), { recursive: true });
+        try { fs.writeFileSync(dataPath, JSON.stringify(appData, null, 2)); } catch(e){}
+        
+        // Notify the main renderer to sync settings in memory
+        ipcRenderer.sendToHost('update-user-name', userName);
+        triggerGreeting(); 
+      }
+      modal.classList.add('hidden');
+    };
+    
+    modal.addEventListener('click', (e) => { if(e.target === modal) modal.classList.add('hidden'); });
+    document.addEventListener('keydown', (e) => { if(e.key === 'Enter' && !modal.classList.contains('hidden')) saveName(); });
+
+    // ==========================================
+    // 2. 3D MAGNETIC PARALLAX ENGINE
+    // ==========================================
+    document.querySelectorAll('.glass-card').forEach(card => {
+      const glare = card.querySelector('.glare');
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+        const rotateX = ((y - (rect.height / 2)) / (rect.height / 2)) * -4; 
+        const rotateY = ((x - (rect.width / 2)) / (rect.width / 2)) * 4;
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+        if(glare) {
+          glare.style.background = `radial-gradient(circle at ${(x / rect.width) * 100}% ${(y / rect.height) * 100}%, rgba(255,255,255,0.15) 0%, transparent 60%)`;
+          glare.style.opacity = '1';
+        }
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+        if(glare) glare.style.opacity = '0';
+      });
+    });
+
+    // ==========================================
+    // 3. GLOBAL COMMAND SEARCH ENGINE
+    // ==========================================
+    const searchInput = document.getElementById('global-search');
+    const searchWrapper = document.getElementById('search-wrapper');
+    const searchDropdown = document.getElementById('search-dropdown');
+    const searchBackdrop = document.getElementById('search-backdrop');
+    const qcGrid = document.getElementById('quick-create-grid');
+
+    let cachedRecentDesigns = [];
+    let currentSearchResults = [];
+    let selectedSearchIndex = -1;
+
+    const quickCreateOptions = [
+      { title: 'Video Studio', url: 'https://www.canva.com/create/videos/', icon: '🎬', tags: ['video', 'mp4', 'movie', 'clip'] },
+      { title: 'Presentation', url: 'https://www.canva.com/create/presentations/', icon: '📐', tags: ['slides', 'powerpoint', 'deck', 'pitch'] },
+      { title: 'A4 Poster', url: 'https://www.canva.com/create/posters/', icon: '📄', tags: ['flyer', 'print', 'sign'] },
+      { title: 'A3 Poster', url: 'https://www.canva.com/create/posters/', icon: '📄', tags: ['flyer', 'print', 'large'] },
+      { title: 'A4 Document', url: 'https://www.canva.com/create/documents/', icon: '📃', tags: ['doc', 'pdf', 'letter', 'resume'] },
+      { title: 'Brand Logo', url: 'https://www.canva.com/create/logos/', icon: '🖼️', tags: ['branding', 'icon', 'symbol'] }
+    ];
+
+    quickCreateOptions.forEach(opt => {
+      qcGrid.innerHTML += `<button class="qc-btn" onclick="launchDesign('${opt.url}', '${opt.title}', event)"><span class="qc-icon">${opt.icon}</span> ${opt.title}</button>`;
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!modal.classList.contains('hidden')) return; 
+      if (e.ctrlKey || e.metaKey || e.altKey) return; 
+
+      if (e.key === 'Escape') {
+        closeSearch();
+        return;
+      }
+
+      const isInput = document.activeElement === searchInput || document.activeElement.tagName === 'INPUT';
+      
+      // If typing a standard character and search isn't focused, focus it instantly
+      if (!isInput && e.key.length === 1 && e.key.match(/[a-zA-Z0-9\s-_]/)) {
+        searchInput.focus();
+      }
+    });
+
+    function closeSearch() {
+      // CRITICAL FIX: Aggressively reset all visual classes and arrays so no UI stays stuck
+      searchBackdrop.classList.add('hidden');
+      searchWrapper.classList.remove('has-results');
+      searchWrapper.classList.remove('active-search');
+      searchDropdown.classList.add('hidden');
+      searchDropdown.innerHTML = '';
+      searchInput.value = '';
+      searchInput.blur();
+      currentSearchResults = [];
+      selectedSearchIndex = -1;
+    }
+
+    searchBackdrop.addEventListener('click', closeSearch);
+
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      
+      if (!query) {
+        searchWrapper.classList.remove('has-results');
+        searchDropdown.classList.add('hidden');
+        searchBackdrop.classList.remove('hidden'); 
+        currentSearchResults = [];
+        selectedSearchIndex = -1;
+        return;
+      }
+
+      searchBackdrop.classList.remove('hidden');
+      searchWrapper.classList.add('active-search');
+      searchWrapper.classList.add('has-results');
+      searchDropdown.classList.remove('hidden');
+      
+      let results = [];
+
+      quickCreateOptions.forEach(opt => {
+        if (opt.title.toLowerCase().includes(query) || opt.tags.some(t => t.includes(query))) {
+          results.push({ ...opt, isRecent: false });
+        }
+      });
+
+      cachedRecentDesigns.forEach(design => {
+        if (design.title.toLowerCase().includes(query)) {
+          results.push({ ...design, isRecent: true });
+        }
+      });
+
+      currentSearchResults = results;
+      selectedSearchIndex = results.length > 0 ? 0 : -1;
+      renderSearchDropdown();
+    });
+
+    searchInput.addEventListener('focus', () => {
+      searchWrapper.classList.add('active-search');
+      if (searchInput.value.trim() !== '') {
+        searchBackdrop.classList.remove('hidden');
+        searchDropdown.classList.remove('hidden');
+      }
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (currentSearchResults.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedSearchIndex = (selectedSearchIndex + 1) % currentSearchResults.length;
+        updateSearchHighlight();
+      } 
+      else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedSearchIndex = (selectedSearchIndex - 1 + currentSearchResults.length) % currentSearchResults.length;
+        updateSearchHighlight();
+      } 
+      else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedSearchIndex >= 0 && selectedSearchIndex < currentSearchResults.length) {
+          const item = currentSearchResults[selectedSearchIndex];
+          // CRITICAL FIX: Close immediately, *then* navigate
+          closeSearch();
+          launchDesign(item.url, item.title, null);
+        }
+      }
+    });
+
+    function renderSearchDropdown() {
+      searchDropdown.innerHTML = '';
+      
+      if (currentSearchResults.length === 0) {
+        searchDropdown.innerHTML = `<div class="sr-empty">No results found for "${searchInput.value}"</div>`;
+        return;
+      }
+
+      currentSearchResults.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'search-result-item' + (index === selectedSearchIndex ? ' keyboard-active' : '');
+        
+        // CRITICAL FIX: Use mousedown to execute immediately before blur logic interrupts
+        div.onmousedown = (e) => { 
+          e.preventDefault(); 
+          closeSearch();
+          launchDesign(item.url, item.title, null); 
+        };
+
+        if (item.isRecent) {
+          const imgHtml = item.img ? `<img class="sr-img" src="${item.img}" alt="Thumb">` : `<div class="sr-icon" style="font-size:16px;">📄</div>`;
+          div.innerHTML = `
+            ${imgHtml}
+            <div class="sr-details">
+              <span class="sr-title">${item.title}</span>
+              <span class="sr-type">Workspace Design</span>
+            </div>
+          `;
+        } else {
+          div.innerHTML = `
+            <div class="sr-icon">${item.icon}</div>
+            <div class="sr-details">
+              <span class="sr-title">${item.title}</span>
+              <span class="sr-type">Quick Launch</span>
+            </div>
+          `;
+        }
+        searchDropdown.appendChild(div);
+      });
+    }
+
+    function updateSearchHighlight() {
+      const items = document.querySelectorAll('.search-result-item');
+      items.forEach((item, idx) => {
+        if (idx === selectedSearchIndex) {
+          item.classList.add('keyboard-active');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('keyboard-active');
+        }
+      });
+    }
+
+    // ==========================================
+    // 4. CORE IPC UTILITIES
+    // ==========================================
+    window.applyDashboardTheme = function(themeId, event) { 
+      if (event && event.currentTarget) {
+        const el = event.currentTarget; el.classList.add('anim-select');
+        setTimeout(() => { ipcRenderer.sendToHost('set-theme', themeId); el.classList.remove('anim-select'); }, 300);
+      } else { ipcRenderer.sendToHost('set-theme', themeId); }
+    };
+    
+    window.launchDesign = function(url, title, event) { 
+      if (event && event.currentTarget) {
+        const el = event.currentTarget; el.classList.add('anim-select');
+        setTimeout(() => { ipcRenderer.sendToHost('open-tab', { url, title }); el.classList.remove('anim-select'); }, 300);
+      } else { ipcRenderer.sendToHost('open-tab', { url, title }); }
+    };
+
+    window.toggleBanana = function() { ipcRenderer.sendToHost('toggle-banana'); };
+
+    // --- RECENT DESIGNS LOCAL TRACKER FETCH ---
+    ipcRenderer.sendToHost('request-recent-designs');
+
+    ipcRenderer.on('recent-designs-data', (event, data) => {
+      cachedRecentDesigns = data || [];
+      const grid = document.getElementById('recent-grid');
+      grid.innerHTML = ''; 
+      
+      if (cachedRecentDesigns.length === 0) {
+        grid.innerHTML = `<div style="color:var(--text-muted); grid-column: 1/-1;">No designs tracked locally yet. Open a design in BetterCanva to track it here!</div>`;
+        return;
+      }
+
+      cachedRecentDesigns.forEach(design => {
+        const item = document.createElement('div');
+        item.className = 'recent-item';
+        item.onclick = (e) => launchDesign(design.url, design.title, e);
+        
+        if(design.img) item.innerHTML = `<img class="recent-img" src="${design.img}" alt="Thumbnail">`;
+        else item.innerHTML = `<div class="recent-img">📄</div>`; 
+
+        item.innerHTML += `<div class="recent-title" title="${design.title}">${design.title}</div>`;
+        grid.appendChild(item);
+      });
+    });
+
+    // --- UPLOADS LOGIC ---
+    const uploadFolder = path.join(__dirname, 'other', 'Uploads');
+    function refreshFileList() {
+      const fileListEl = document.getElementById('file-list');
+      fileListEl.innerHTML = '';
+      if (!fs.existsSync(uploadFolder)) return;
+      const files = fs.readdirSync(uploadFolder).filter(f => !f.startsWith('.'));
+      if (files.length === 0) {
+        fileListEl.innerHTML = '<div style="color:#666; text-align:center; padding: 20px;">Folder is empty.</div>';
+        return;
+      }
+      files.forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = `<span class="file-name" title="${file}">${file}</span><button class="btn-icon" title="Delete Local File" onclick="deleteFile('${file}')">✖</button>`;
+        fileListEl.appendChild(item);
+      });
+    }
+    window.deleteFile = function(filename) { try { fs.unlinkSync(path.join(uploadFolder, filename)); refreshFileList(); } catch(e) {} };
+    document.getElementById('btn-open-folder').onclick = () => shell.openPath(uploadFolder);
+    setInterval(refreshFileList, 2000);
+    refreshFileList();
+
+  </script>
+</body>
+</html>

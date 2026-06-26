@@ -1,0 +1,15 @@
+
+:root{--bg:#0d0e12;--glass:rgba(255,255,255,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(135deg,#0d0e12,#171926);color:#fff;transition:.5s}
+.top,.hero,.grid,footer{transition:.5s}
+.top{display:flex;justify-content:space-between;padding:24px}.btn{padding:12px 20px;border-radius:10px;background:linear-gradient(90deg,cyan,#8a2be2);color:#fff;text-decoration:none}
+.hero{text-align:center;padding:80px 20px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:30px}
+.card{backdrop-filter:blur(12px);background:var(--glass);border:1px solid rgba(255,255,255,.1);padding:40px;border-radius:18px;transition:.3s}
+.card:hover{transform:translateY(-6px) scale(1.03)}
+.video-wrap{padding:40px;display:flex;justify-content:center}
+#videoContainer{transition:.5s;width:min(900px,100%)}video{width:100%;border-radius:16px}
+body.cinematic::before{content:"";position:fixed;inset:0;background:#000c;pointer-events:none}
+body.cinematic .fadeable,body.cinematic .top{opacity:.08}
+body.cinematic #videoContainer{transform:scale(1.08);z-index:2;position:relative}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
