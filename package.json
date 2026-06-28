@@ -3,12 +3,35 @@
   "version": "1.0.0",
   "description": "It's Canva but better. Simple as that.",
   "main": "main.js",
-  "scripts": {
-    "start": "electron ."
-  },
   "author": "andomatthew1234",
   "license": "ISC",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
   "devDependencies": {
-    "electron": "^29.0.0" 
+    "electron": "^29.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.bettercanva.app",
+    "productName": "BetterCanva",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

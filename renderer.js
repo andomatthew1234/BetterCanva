@@ -12,7 +12,8 @@ const appSplash = document.getElementById('app-splash');
 // ==========================================
 // --- DATA.JSON SETTINGS ENGINE ---
 // ==========================================
-const dataDir = path.join(__dirname, 'other');
+// Must write to Documents, otherwise the compiled .exe throws read-only errors and crashes
+const dataDir = path.join(os.homedir(), 'Documents', 'BetterCanva', 'Data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
@@ -27,7 +28,7 @@ const defaultSettings = {
   zenMode: false,
   bananaTheme: false,
   theme: 'system',
-  userName: 'Matthew'
+  userName: 'Creator'
 };
 
 // Global Memory Cache
@@ -60,13 +61,25 @@ function saveSettings() {
 loadSettings();
 
 // ==========================================
+// --- SAFE WEBVIEW URL HELPER ---
+// ==========================================
+function getWebviewUrl(viewEl) {
+  if (!viewEl) return '';
+  try {
+    return viewEl.getURL();
+  } catch (e) {
+    return viewEl.src || '';
+  }
+}
+
+// ==========================================
 // --- FOCUS MANAGEMENT ENGINE ---
 // ==========================================
 function forceFocusOnWebview(viewEl) {
   if (!viewEl) return;
   viewEl.focus();
   
-  if (viewEl.getURL().includes('welcome.html')) {
+  if (getWebviewUrl(viewEl).includes('welcome.html')) {
     viewEl.executeJavaScript(`
       window.focus();
       document.body.focus();
@@ -117,7 +130,6 @@ function openLucidSearch() {
 }
 
 function closeLucidSearch() {
-  // We aggressively reset all classes and arrays so no UI stays stuck
   lucidBackdrop.classList.add('hidden');
   lucidWrapper.classList.remove('has-results');
   lucidDropdown.classList.add('hidden');
@@ -154,6 +166,7 @@ lucidInput.addEventListener('input', (e) => {
   if (!query) {
     lucidWrapper.classList.remove('has-results');
     lucidDropdown.classList.add('hidden');
+    lucidDropdown.innerHTML = '';
     lucidSearchResults = [];
     lucidSelectedIndex = -1;
     return;
@@ -164,14 +177,12 @@ lucidInput.addEventListener('input', (e) => {
   
   let results = [];
 
-  // 1. Filter Quick Creates
   quickCreateOptions.forEach(opt => {
     if (opt.title.toLowerCase().includes(query) || opt.tags.some(t => t.includes(query))) {
       results.push({ ...opt, isRecent: false });
     }
   });
 
-  // 2. Fetch and Filter Recent Designs
   let recents = [];
   const recentsPath = path.join(dataDir, 'recent_designs.json');
   if (fs.existsSync(recentsPath)) {
@@ -204,9 +215,9 @@ lucidInput.addEventListener('keydown', (e) => {
   } 
   else if (e.key === 'Enter') {
     e.preventDefault();
+    e.stopPropagation();
     if (lucidSelectedIndex >= 0 && lucidSelectedIndex < lucidSearchResults.length) {
       const item = lucidSearchResults[lucidSelectedIndex];
-      // CRITICAL FIX: Close search immediately before navigating
       closeLucidSearch();
       createTab(item.url, item.title);
     }
@@ -225,9 +236,8 @@ function renderLucidDropdown() {
     const div = document.createElement('div');
     div.className = 'lucid-result-item' + (index === lucidSelectedIndex ? ' keyboard-active' : '');
     
-    // CRITICAL FIX: Use mousedown to prevent blur issues and close immediately
-    div.onmousedown = (e) => { 
-      e.preventDefault();
+    div.onclick = (e) => { 
+      e.stopPropagation();
       closeLucidSearch(); 
       createTab(item.url, item.title); 
     };
@@ -271,7 +281,7 @@ function updateLucidHighlight() {
 // ==========================================
 const getStartupUrl = () => {
   if (!appSettings.hasOnboarded) {
-    return 'file://' + path.join(__dirname, 'other', 'onboarding.html');
+    return 'file://' + path.join(__dirname, 'other', 'onboarding.html'); // Reading HTML from inside the app is safe
   }
   return appSettings.startupDashboard ? 'file://' + path.join(__dirname, 'welcome.html') : 'https://www.canva.com';
 };
@@ -343,7 +353,7 @@ ipcRenderer.on('export-downloaded', () => {
 });
 
 function getHistoryDir() {
-  return path.join(dataDir, 'Export History', currentActiveDesignId);
+  return path.join(os.homedir(), 'Documents', 'BetterCanva', 'Export History', currentActiveDesignId);
 }
 
 function renderHistory() {
@@ -441,7 +451,7 @@ function previewFile(entry) {
 // --- ASSET WATCHER (HOT FOLDER ENGINE) ---
 // ==========================================
 const folderBtn = document.getElementById('folder-btn');
-const uploadFolder = path.join(__dirname, 'other', 'Uploads');
+const uploadFolder = path.join(os.homedir(), 'Documents', 'BetterCanva', 'Uploads');
 
 if (!fs.existsSync(uploadFolder)) {
   fs.mkdirSync(uploadFolder, { recursive: true });
@@ -848,7 +858,6 @@ function createTab(url = 'https://www.canva.com', title = 'Home') {
       appSettings.userName = event.args[0].userName;
       appSettings.startupDashboard = event.args[0].startupDashboard;
       
-      // Catching the Quick Start toggle value from the new Settings card
       if (event.args[0].quickStart !== undefined) {
           appSettings.quickStart = event.args[0].quickStart;
           ipcRenderer.send('set-quick-start', appSettings.quickStart); 
@@ -892,7 +901,7 @@ function createTab(url = 'https://www.canva.com', title = 'Home') {
   });
 
   viewEl.addEventListener('dom-ready', () => {
-    const currentUrl = viewEl.getURL();
+    const currentUrl = getWebviewUrl(viewEl);
     
     // --- INVISIBLE AUTO-CLICK CTA ---
     if (currentUrl.includes('canva.com/create/')) {
@@ -953,7 +962,7 @@ function createTab(url = 'https://www.canva.com', title = 'Home') {
       const cleanTitle = e.title.replace(' - Canva', '').trim();
       setTabTitle(cleanTitle);
 
-      const currentUrl = viewEl.getURL();
+      const currentUrl = getWebviewUrl(viewEl);
       if (currentUrl.includes('/design/DA')) {
         trackRecentDesign(currentUrl, cleanTitle);
       }
@@ -973,7 +982,7 @@ function activateTab(tabId) {
   if (targetTab && targetView) {
     targetTab.classList.add('active');
     targetView.classList.add('active');
-    checkUrlForDesignId(targetView.getURL());
+    checkUrlForDesignId(getWebviewUrl(targetView));
 
     // --- CRITICAL: GRAB KEYBOARD FOCUS ON TAB SWITCH ---
     setTimeout(() => forceFocusOnWebview(targetView), 50);

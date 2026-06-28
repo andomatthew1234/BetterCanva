@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
-const DATA_DIR = path.join(__dirname, 'other');
+const DATA_DIR = path.join(os.homedir(), 'Documents', 'BetterCanva', 'Data');
 const HISTORY_FILE = path.join(DATA_DIR, 'recent_designs.json');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });

@@ -177,7 +177,6 @@
   <div id="bg-mesh"></div>
   <div id="overlay"></div>
 
-  <!-- Scary Red Quick Start Warning Modal -->
   <div id="scary-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <h2 style="color: #ff4444; margin-top: 0; font-size: 24px;">Are you sure you want to turn off Quick Start?</h2>
@@ -187,7 +186,6 @@
     </div>
   </div>
 
-  <!-- Progress Bar (7 Segments) -->
   <div class="progress-container" id="progress-container">
     <div class="progress-segment"><div class="progress-fill" id="fill-0"></div></div>
     <div class="progress-segment"><div class="progress-fill" id="fill-1"></div></div>
@@ -198,10 +196,8 @@
     <div class="progress-segment"><div class="progress-fill" id="fill-6"></div></div>
   </div>
 
-  <!-- Slider -->
   <div class="slider-viewport" id="slider">
     
-    <!-- SLIDE 0: Introduction -->
     <div class="slide" id="slide-0">
       <div class="glass-panel">
         <h1>Introduction 🖌️</h1>
@@ -214,15 +210,10 @@
       </div>
     </div>
 
-    <!-- SLIDE 1: BetterDash -->
     <div class="slide" id="slide-1">
       <div class="glass-panel">
         <h1>BetterDash 🚀</h1>
         <p>The <b>personlised dashboard</b> allows you to jump straight into your workspace. <br><br>The built in <b>LucidSearch</b> allows you to type anything, and find designs in your recently opened projects, or create a new design in a few words. You can also directly create a new design with the <b>launchpad</b> feature, and start designing in one click.<br><br>Access your themes, local upload management, and more features coming soon.</p>
-        <div class="mock-spotlight">
-          <span class="mock-icon">🔍</span>
-          <span class="mock-text">Instagram Post...</span>
-        </div>
         <div class="nav-controls">
           <button class="btn-nav" onclick="prevSlide(0)">← Back</button>
           <button class="btn-primary magnetic" onclick="nextSlide(2)">Next →</button>
@@ -230,7 +221,6 @@
       </div>
     </div>
 
-    <!-- SLIDE 2: Focus Canvas -->
     <div class="slide" id="slide-2">
       <div class="glass-panel">
         <h1>Focus Canvas 🎶</h1>
@@ -251,7 +241,6 @@
       </div>
     </div>
 
-    <!-- SLIDE 3: Faster Uploads -->
     <div class="slide" id="slide-3">
       <div class="glass-panel">
         <h1>Fast-er Uploads ⬆️</h1>
@@ -263,7 +252,6 @@
       </div>
     </div>
 
-    <!-- SLIDE 4: LucidSearch (NEW) -->
     <div class="slide" id="slide-4">
       <div class="glass-panel">
         <h1>LucidSearch 🔍</h1>
@@ -275,7 +263,6 @@
       </div>
     </div>
 
-    <!-- SLIDE 5: Themes -->
     <div class="slide" id="slide-5">
       <div class="glass-panel">
         <h1>Themes 🎨</h1>
@@ -298,12 +285,10 @@
       </div>
     </div>
 
-    <!-- SLIDE 6: SETTINGS & LAUNCH -->
     <div class="slide" id="slide-6">
       <div class="glass-panel">
         <h1 style="margin-bottom: 24px;">Choose your settings ⚙️</h1>
         
-        <!-- Setting A: Homepage Selector -->
         <div class="setting-group">
           <label>Where do you want your homepage to be for BetterCanva?</label>
           <div class="segmented-control">
@@ -312,7 +297,6 @@
           </div>
         </div>
 
-        <!-- Setting B: Quick Start Toggle -->
         <div class="setting-group">
           <div class="setting-flex">
             <label style="margin: 0; font-size: 13px; font-weight: 500; line-height: 1.4;">Keep BetterCanva running in the background and launch BetterCanva faster (Quick Start)</label>
@@ -323,7 +307,11 @@
           </div>
         </div>
 
-        <button class="btn-primary btn-launch magnetic" onclick="launchWorkspace()">Launch Workspace 🚀</button>
+        <div style="margin-top: 10px; margin-bottom: 10px; font-size: 14px; color: var(--text-muted);">
+          <b>Final Step:</b> You'll need to sign in to Canva to access your workspace.
+        </div>
+
+        <button class="btn-primary btn-launch magnetic" onclick="launchWorkspace()">Finish Setup & Login to Canva 🚀</button>
         
         <div class="nav-controls" style="margin-top: 16px;">
           <button class="btn-nav" onclick="prevSlide(5)">← Back</button>
@@ -475,6 +463,10 @@
 
       // Beam data to renderer.js after fade
       setTimeout(() => {
+        
+        // Open the Canva login page explicitly right before completing setup
+        ipcRenderer.sendToHost('open-tab', { url: 'https://www.canva.com/login', title: 'Login' });
+
         ipcRenderer.sendToHost('complete-onboarding', {
           userName: capturedNameValue,
           startupDashboard: isDashboardHomepage,

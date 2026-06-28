@@ -53,7 +53,7 @@
     .search-backdrop.hidden { opacity: 0; pointer-events: none; }
 
     .search-wrapper {
-      max-width: 600px; margin: 0 auto 40px auto; position: relative;
+      max-width: 600px; margin: 0 auto 16px auto; position: relative;
       border-radius: 20px; transform: translateZ(20px); z-index: 100;
     }
     
@@ -118,6 +118,17 @@
     .sr-type { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; font-weight: 700;}
     .sr-empty { padding: 24px; text-align: center; color: var(--text-muted); font-size: 14px; }
 
+    /* --- DIRECT CANVA BUTTON --- */
+    .btn-canva-direct {
+      background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      color: white; padding: 12px 24px; border-radius: 20px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-canva-direct:hover {
+      background: rgba(0, 196, 204, 0.15); border-color: var(--accent);
+      transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 196, 204, 0.2);
+    }
 
     /* --- BENTO BOX GRID --- */
     .dashboard {
@@ -213,28 +224,28 @@
 </head>
 <body tabindex="-1">
 
-  <!-- Backdrop for Spotlight Search Focus -->
   <div id="search-backdrop" class="search-backdrop hidden"></div>
 
-  <!-- Dynamic Header -->
   <div class="header-container">
     <h1 class="title-gradient" id="greeting-text"></h1>
   </div>
 
-  <!-- Global Command Search (Spotlight Engine) -->
   <div class="search-wrapper" id="search-wrapper">
     <span class="search-icon">🔍</span>
     <input type="text" id="global-search" class="search-input" placeholder="Start typing to search your history and create a design..." autocomplete="off" spellcheck="false">
     
     <div class="search-dropdown hidden" id="search-dropdown">
-      <!-- Search Results Injected Here -->
-    </div>
+      </div>
   </div>
 
-  <!-- Bento Box Layout -->
+  <div style="text-align: center; margin-bottom: 40px; position: relative; z-index: 5;">
+    <button class="btn-canva-direct magnetic" onclick="launchDesign('https://www.canva.com', 'Home', event)">
+      🌐 Open Canva.com
+    </button>
+  </div>
+
   <div class="dashboard">
     
-    <!-- CARD 1: RECENT DESIGNS (WIDE HERO) -->
     <div class="glass-card card-recent">
       <div class="glare"></div>
       <h2 class="card-title">Workspace <span>🕒</span></h2>
@@ -243,16 +254,13 @@
       </div>
     </div>
 
-    <!-- CARD 2: QUICK CREATE (TALL COLUMN) -->
     <div class="glass-card card-quick">
       <div class="glare"></div>
       <h2 class="card-title">Launchpad <span>🚀</span></h2>
       <div class="quick-create-grid" id="quick-create-grid">
-        <!-- Rendered by JS so it matches Search Index perfectly -->
-      </div>
+        </div>
     </div>
 
-    <!-- CARD 3: THEMES (UTILITY) -->
     <div class="glass-card card-themes">
       <div class="glare"></div>
       <h2 class="card-title">Themes 🎨</h2>
@@ -268,7 +276,6 @@
       <button class="btn-subtle" onclick="toggleBanana()">Toggle Banana Injector (Beta)</button>
     </div>
 
-    <!-- CARD 4: UPLOADS (UTILITY) -->
     <div class="glass-card card-uploads">
       <div class="glare"></div>
       <h2 class="card-title">Local Uploads ☁️</h2>
@@ -280,12 +287,10 @@
 
   </div>
 
-  <!-- FOOTER -->
   <div class="footer-bar">
     <button class="edit-name-btn" onclick="openNameModal()">📝 Edit Name</button>
   </div>
 
-  <!-- NAME EDITOR MODAL -->
   <div id="name-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <h2 style="margin-top: 0;">Creator Profile</h2>
@@ -419,7 +424,9 @@
     let currentSearchResults = [];
     let selectedSearchIndex = -1;
 
+    // Added Canva.com to the very top of the options
     const quickCreateOptions = [
+      { title: 'Open Canva.com', url: 'https://www.canva.com', icon: '🌐', tags: ['home', 'canva', 'dashboard', 'website', 'login'] },
       { title: 'Video Studio', url: 'https://www.canva.com/create/videos/', icon: '🎬', tags: ['video', 'mp4', 'movie', 'clip'] },
       { title: 'Presentation', url: 'https://www.canva.com/create/presentations/', icon: '📐', tags: ['slides', 'powerpoint', 'deck', 'pitch'] },
       { title: 'A4 Poster', url: 'https://www.canva.com/create/posters/', icon: '📄', tags: ['flyer', 'print', 'sign'] },
@@ -428,8 +435,11 @@
       { title: 'Brand Logo', url: 'https://www.canva.com/create/logos/', icon: '🖼️', tags: ['branding', 'icon', 'symbol'] }
     ];
 
+    // Build Quick Create grid but skip the Canva.com generic link for the physical UI cards
     quickCreateOptions.forEach(opt => {
-      qcGrid.innerHTML += `<button class="qc-btn" onclick="launchDesign('${opt.url}', '${opt.title}', event)"><span class="qc-icon">${opt.icon}</span> ${opt.title}</button>`;
+      if (opt.title !== 'Open Canva.com') {
+        qcGrid.innerHTML += `<button class="qc-btn" onclick="launchDesign('${opt.url}', '${opt.title}', event)"><span class="qc-icon">${opt.icon}</span> ${opt.title}</button>`;
+      }
     });
 
     document.addEventListener('keydown', (e) => {
@@ -450,16 +460,16 @@
     });
 
     function closeSearch() {
-      // CRITICAL FIX: Aggressively reset all visual classes and arrays so no UI stays stuck
+      // Instantly wipe visuals and state
       searchBackdrop.classList.add('hidden');
       searchWrapper.classList.remove('has-results');
       searchWrapper.classList.remove('active-search');
       searchDropdown.classList.add('hidden');
       searchDropdown.innerHTML = '';
       searchInput.value = '';
-      searchInput.blur();
       currentSearchResults = [];
       selectedSearchIndex = -1;
+      searchInput.blur();
     }
 
     searchBackdrop.addEventListener('click', closeSearch);
@@ -470,6 +480,7 @@
       if (!query) {
         searchWrapper.classList.remove('has-results');
         searchDropdown.classList.add('hidden');
+        searchDropdown.innerHTML = '';
         searchBackdrop.classList.remove('hidden'); 
         currentSearchResults = [];
         selectedSearchIndex = -1;
@@ -523,9 +534,9 @@
       } 
       else if (e.key === 'Enter') {
         e.preventDefault();
+        e.stopPropagation();
         if (selectedSearchIndex >= 0 && selectedSearchIndex < currentSearchResults.length) {
           const item = currentSearchResults[selectedSearchIndex];
-          // CRITICAL FIX: Close immediately, *then* navigate
           closeSearch();
           launchDesign(item.url, item.title, null);
         }
@@ -544,10 +555,9 @@
         const div = document.createElement('div');
         div.className = 'search-result-item' + (index === selectedSearchIndex ? ' keyboard-active' : '');
         
-        // CRITICAL FIX: Use mousedown to execute immediately before blur logic interrupts
-        div.onmousedown = (e) => { 
-          e.preventDefault(); 
-          closeSearch();
+        div.onclick = (e) => { 
+          e.stopPropagation();
+          closeSearch(); 
           launchDesign(item.url, item.title, null); 
         };
 
@@ -652,6 +662,19 @@
     document.getElementById('btn-open-folder').onclick = () => shell.openPath(uploadFolder);
     setInterval(refreshFileList, 2000);
     refreshFileList();
+
+    // --- MAGNETIC BUTTON PHYSICS (For the new direct Canva button) ---
+    document.querySelectorAll('.magnetic').forEach(btn => {
+      btn.addEventListener('mousemove', e => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px) scale(1.02)`;
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = `translate(0px, 0px) scale(1)`;
+      });
+    });
 
   </script>
 </body>
