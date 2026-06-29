@@ -12,7 +12,6 @@ const appSplash = document.getElementById('app-splash');
 // ==========================================
 // --- DATA.JSON SETTINGS ENGINE ---
 // ==========================================
-// Must write to Documents, otherwise the compiled .exe throws read-only errors and crashes
 const dataDir = path.join(os.homedir(), 'Documents', 'BetterCanva', 'Data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
@@ -34,7 +33,6 @@ const defaultSettings = {
 // Global Memory Cache
 let appSettings = { ...defaultSettings };
 
-// Load settings on boot
 function loadSettings() {
   if (fs.existsSync(settingsPath)) {
     try {
@@ -44,11 +42,10 @@ function loadSettings() {
       console.error("Error reading data.json, using defaults.", e);
     }
   } else {
-    saveSettings(); // Create the file if it doesn't exist
+    saveSettings(); 
   }
 }
 
-// Save settings to disk
 function saveSettings() {
   try {
     fs.writeFileSync(settingsPath, JSON.stringify(appSettings, null, 2));
@@ -57,7 +54,6 @@ function saveSettings() {
   }
 }
 
-// Initialize settings on boot
 loadSettings();
 
 // ==========================================
@@ -148,7 +144,6 @@ lucidBackdrop.addEventListener('click', (e) => {
   if (e.target === lucidBackdrop) closeLucidSearch();
 });
 
-// Host-level Shortcut Catcher
 window.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.altKey && e.code === 'Space') {
     e.preventDefault();
@@ -281,7 +276,7 @@ function updateLucidHighlight() {
 // ==========================================
 const getStartupUrl = () => {
   if (!appSettings.hasOnboarded) {
-    return 'file://' + path.join(__dirname, 'other', 'onboarding.html'); // Reading HTML from inside the app is safe
+    return 'file://' + path.join(__dirname, 'other', 'onboarding.html'); 
   }
   return appSettings.startupDashboard ? 'file://' + path.join(__dirname, 'welcome.html') : 'https://www.canva.com';
 };
@@ -600,7 +595,6 @@ function applyTheme(theme) {
   root.classList.add(`theme-${theme}`);
 }
 
-// --- APP STARTUP TOGGLE UI INIT ---
 const startupToggle = document.getElementById('startup-toggle');
 if (startupToggle) {
   startupToggle.checked = appSettings.startupDashboard;
@@ -610,7 +604,6 @@ if (startupToggle) {
   });
 }
 
-// --- QUICK START TOGGLE UI INIT ---
 const quickStartToggle = document.getElementById('quick-start-toggle');
 if (quickStartToggle) {
   quickStartToggle.checked = appSettings.quickStart;
@@ -623,7 +616,6 @@ if (quickStartToggle) {
   });
 }
 
-// --- CELEBRATION THEME LOGIC ---
 document.getElementById('tab-bar').addEventListener('mousedown', (e) => {
   if (document.documentElement.classList.contains('theme-celebration')) {
     createExplosion(e.clientX, e.clientY);
@@ -653,7 +645,6 @@ function createExplosion(x, y) {
   }
 }
 
-// --- STUDIO ZEN MODE ENGINE ---
 const ZEN_CSS = `
   header, [role="banner"] {
     position: fixed !important;
@@ -699,7 +690,6 @@ function updateZenModeCSS(viewEl, enabled) {
   }
 }
 
-// --- BANANA THEME INJECTION ENGINE ---
 const BANANA_CSS = `
   :root { --b-bg: #fffde7 !important; --b-surface: #fff59d !important; --b-card: #fff9c4 !important; --b-text: #3e2723 !important; --b-accent: #fbc02d !important; }
   html body #root > div, html body #root > div > div, html body #root > div > div > div, html body .app-wrapper { background-color: var(--b-bg) !important; background-image: none !important; }
@@ -723,9 +713,6 @@ function updateWebviewCSS(viewEl, enabled) {
   }
 }
 
-// ==========================================
-// --- TAB LOGIC & LOADING BAR EVENTS ---
-// ==========================================
 let tabCounter = 0;
 let isAppBooted = false;
 
@@ -820,7 +807,6 @@ function createTab(url = 'https://www.canva.com', title = 'Home') {
   viewEl.setAttribute('webpreferences', 'contextIsolation=no');
   viewsContainer.appendChild(viewEl);
 
-  // --- SEAMLESS QUICK CREATE BYPASS ---
   viewEl.addEventListener('did-start-navigation', (e) => {
     if (e.url.includes('canva.com/create/')) {
       viewEl.style.opacity = '0'; 
@@ -852,7 +838,6 @@ function createTab(url = 'https://www.canva.com', title = 'Home') {
     else if (event.channel === 'request-recent-designs') {
       fetchRecentDesignsForDashboard(viewEl);
     }
-    // --- ONBOARDING COMPLETION HANDLER ---
     else if (event.channel === 'complete-onboarding') {
       appSettings.hasOnboarded = true;
       appSettings.userName = event.args[0].userName;
@@ -869,14 +854,18 @@ function createTab(url = 'https://www.canva.com', title = 'Home') {
       saveSettings();
       closeTab(tabId, tabEl);
     }
-    // --- NAME SYNC HANDLER ---
     else if (event.channel === 'update-user-name') {
       appSettings.userName = event.args[0];
       saveSettings();
     }
-    // --- LUCID SEARCH SHORTCUT CAUGHT INSIDE WEBVIEW ---
     else if (event.channel === 'open-lucid-search') {
       openLucidSearch();
+    }
+    else if (event.channel === 'start-update') {
+      ipcRenderer.send('start-update'); // Forwards button click to main process
+    }
+    else if (event.channel === 'install-update') {
+      ipcRenderer.send('install-update');
     }
   });
 
@@ -903,7 +892,6 @@ function createTab(url = 'https://www.canva.com', title = 'Home') {
   viewEl.addEventListener('dom-ready', () => {
     const currentUrl = getWebviewUrl(viewEl);
     
-    // --- INVISIBLE AUTO-CLICK CTA ---
     if (currentUrl.includes('canva.com/create/')) {
       const autoClickScript = `
         (function() {
@@ -924,7 +912,6 @@ function createTab(url = 'https://www.canva.com', title = 'Home') {
     updateWebviewCSS(viewEl, appSettings.bananaTheme);
     updateZenModeCSS(viewEl, appSettings.zenMode);
 
-    // --- INJECT LUCIDSEARCH SHORTCUT LISTENER INTO CANVA ---
     const lucidShortcutScript = `
       window.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.altKey && e.code === 'Space') {
@@ -936,14 +923,12 @@ function createTab(url = 'https://www.canva.com', title = 'Home') {
     `;
     viewEl.executeJavaScript(lucidShortcutScript).catch(() => {});
 
-    // Provide the saved name to the welcome/onboarding pages via IPC injection
     if (currentUrl.includes('welcome.html') || currentUrl.includes('onboarding.html')) {
         viewEl.executeJavaScript(`
             window.appSettingsData = ${JSON.stringify(appSettings)};
         `).catch(() => {});
     }
 
-    // --- ZERO-CLICK AUTOFOCUS HOOK ---
     if (currentUrl.includes('welcome.html') && viewEl.classList.contains('active')) {
       setTimeout(() => forceFocusOnWebview(viewEl), 100); 
     }
@@ -984,7 +969,6 @@ function activateTab(tabId) {
     targetView.classList.add('active');
     checkUrlForDesignId(getWebviewUrl(targetView));
 
-    // --- CRITICAL: GRAB KEYBOARD FOCUS ON TAB SWITCH ---
     setTimeout(() => forceFocusOnWebview(targetView), 50);
   }
 }
@@ -1007,5 +991,25 @@ function closeTab(tabId, tabEl) {
   }
 }
 
-// --- BOOT PROCESS ---
+// --- AUTO-UPDATER IPC BRIDGE ---
+ipcRenderer.on('update-progress', (event, percent) => {
+  document.querySelectorAll('webview').forEach(v => {
+    try {
+      if (v.getURL().includes('welcome.html') || v.src.includes('welcome.html')) {
+        v.send('update-progress', percent);
+      }
+    } catch(e) {}
+  });
+});
+
+ipcRenderer.on('update-downloaded', (event) => {
+  document.querySelectorAll('webview').forEach(v => {
+    try {
+      if (v.getURL().includes('welcome.html') || v.src.includes('welcome.html')) {
+        v.send('update-downloaded');
+      }
+    } catch(e) {}
+  });
+});
+
 createTab(getStartupUrl(), getStartupTitle());

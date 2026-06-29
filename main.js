@@ -1,12 +1,18 @@
 const { app, BrowserWindow, Tray, Menu, session, ipcMain, dialog, nativeImage } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
 // ==========================================
+// --- VERSION BYPASS HACK ---
+// Forces electron-updater to ALWAYS see the GitHub release as "newer",
+// ensuring the update button always downloads the latest remote files.
+// ==========================================
+app.getVersion = () => '0.0.0';
+
+// ==========================================
 // --- 1. SINGLE INSTANCE LOCK ---
-// Prevents duplicate processes, duplicate tray icons, and forces 
-// the existing Quick Start instance to simply un-hide itself instantly.
 // ==========================================
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -19,8 +25,6 @@ if (!gotTheLock) {
 
   // --- 2. SECOND INSTANCE HANDLER ---
   app.on('second-instance', (event, commandLine, workingDirectory) => {
-    // If the user clicks the app shortcut while it's in the background, 
-    // instantly restore the existing window instead of booting a new one.
     if (mainWindow) {
       if (!mainWindow.isVisible()) mainWindow.show();
       if (mainWindow.isMinimized()) mainWindow.restore();
@@ -29,7 +33,6 @@ if (!gotTheLock) {
   });
 
   // --- DIRECT SETTINGS READ ---
-  // Read settings immediately on boot so the background process knows its state
   let isQuickStartEnabled = true;
   let exportHistoryEnabled = true;
   let currentDesignId = 'unknown-design';
@@ -48,12 +51,10 @@ if (!gotTheLock) {
   }
   loadMainSettings();
 
-  // Listen for live updates from renderer if user toggles them while app is open
   ipcMain.on('set-quick-start', (event, state) => { isQuickStartEnabled = state; });
   ipcMain.on('set-export-history-state', (event, state) => { exportHistoryEnabled = state; });
   ipcMain.on('set-current-design', (event, designId) => { currentDesignId = designId || 'unknown-design'; });
 
-  // Handle copying a version native dialog
   ipcMain.handle('copy-file-dialog', async (event, sourcePath, defaultFilename) => {
     const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
       defaultPath: defaultFilename,
@@ -71,7 +72,7 @@ if (!gotTheLock) {
       width: 1280,
       height: 800,
       title: 'BetterCanva',
-      icon: path.join(__dirname, 'Icon.png'), // CAPITAL 'I' for ASAR case-sensitivity
+      icon: path.join(__dirname, 'Icon.png'),
       webPreferences: {
         nodeIntegration: true, 
         contextIsolation: false, 
@@ -87,20 +88,17 @@ if (!gotTheLock) {
     // --- WINDOW CLOSE BEHAVIOR ---
     mainWindow.on('close', function (event) {
       if (isQuickStartEnabled && !forceQuit) {
-        // QUICK START ON: Intercept close, hide window to system tray
         event.preventDefault(); 
         mainWindow.hide();      
       }
-      // If Quick Start is OFF, or forceQuit is true (tray Quit clicked), let it close normally.
     });
 
     // --- NATIVE DOWNLOAD INTERCEPTOR ---
     session.fromPartition('persist:canva').on('will-download', (event, item, webContents) => {
       if (!exportHistoryEnabled || currentDesignId === 'unknown-design') {
-        return; // Do nothing, let it prompt the user normally
+        return; 
       }
 
-      // Intercept and auto-route to Documents so it can write safely in compiled .exe
       const baseDir = path.join(os.homedir(), 'Documents', 'BetterCanva', 'Export History', currentDesignId);
       if (!fs.existsSync(baseDir)) {
         fs.mkdirSync(baseDir, { recursive: true });
@@ -114,7 +112,7 @@ if (!gotTheLock) {
 
       const nextVersion = history.length > 0 ? Math.max(...history.map(h => h.version)) + 1 : 1;
       let originalExt = path.extname(item.getFilename()).toLowerCase();
-      if (!originalExt) originalExt = '.png'; // Fallback
+      if (!originalExt) originalExt = '.png';
       
       const newFilename = `${nextVersion}${originalExt}`;
       const savePath = path.join(baseDir, newFilename);
@@ -130,17 +128,36 @@ if (!gotTheLock) {
             fileType: originalExt.replace('.', ''),
             fileSize: item.getReceivedBytes()
           };
-          history.unshift(newEntry); // Put newest at the top
+          history.unshift(newEntry);
           fs.writeFileSync(historyJsonPath, JSON.stringify(history, null, 2));
-          
-          // Tell the frontend to refresh the sidebar
           mainWindow.webContents.send('export-downloaded');
         }
       });
     });
   }
 
-  // Catch the official app termination signal
+  // --- AUTO UPDATER EVENTS ---
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  // Manual Trigger from Welcome.html
+  ipcMain.on('start-update', () => {
+    autoUpdater.checkForUpdates();
+  });
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    if(mainWindow) mainWindow.webContents.send('update-progress', progressObj.percent);
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    if(mainWindow) mainWindow.webContents.send('update-downloaded');
+  });
+
+  ipcMain.on('install-update', () => {
+    forceQuit = true;
+    autoUpdater.quitAndInstall();
+  });
+
   app.on('before-quit', () => {
     forceQuit = true;
   });
@@ -148,13 +165,9 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     createWindow();
 
-    // --- SYSTEM TRAY INIT ---
-    // CAPITAL 'I' for ASAR case-sensitivity!
     const iconPath = path.join(__dirname, 'Icon.png');
-    
-    // Using nativeImage prevents the "invisible/failed icon" bug on Windows compiled .exe
     let trayIcon = nativeImage.createFromPath(iconPath);
-    trayIcon = trayIcon.resize({ width: 32, height: 32 }); // Force size to standard Windows tray specs
+    trayIcon = trayIcon.resize({ width: 32, height: 32 });
 
     tray = new Tray(trayIcon);
     
@@ -172,7 +185,6 @@ if (!gotTheLock) {
     tray.setToolTip('BetterCanva');
     tray.setContextMenu(contextMenu);
     
-    // Left click tray icon opens app
     tray.on('click', () => {
         if (mainWindow) {
             mainWindow.show();
@@ -180,7 +192,6 @@ if (!gotTheLock) {
         }
     });
 
-    // Intercept new window requests (like popups) to force them into webview logic
     app.on('web-contents-created', (event, contents) => {
       if (contents.getType() === 'webview') {
         contents.setWindowOpenHandler(({ url }) => {
@@ -191,7 +202,6 @@ if (!gotTheLock) {
     });
   });
 
-  // Explicitly handle all windows closing
   app.on('window-all-closed', function () {
     if (process.platform !== 'darwin') {
       app.quit();

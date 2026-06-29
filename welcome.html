@@ -23,14 +23,11 @@
       background-size: cover; background-position: center; background-attachment: fixed;
     }
     
-    /* Removes focus outline from the body when we force-focus it on boot */
     body:focus { outline: none; }
-
     body::-webkit-scrollbar { width: 8px; }
     body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
     @media (prefers-color-scheme: dark) { body, html { background-image: url('assets/bg_dark.png'); } }
 
-    /* --- DYNAMIC HEADER --- */
     .header-container { text-align: center; margin-top: 50px; margin-bottom: 24px; height: 60px; position: relative; z-index: 5; }
 
     .title-gradient {
@@ -44,7 +41,6 @@
     }
     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-    /* --- GLOBAL SPOTLIGHT SEARCH UI --- */
     .search-backdrop {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -62,8 +58,6 @@
       background: var(--time-grad); border-radius: 22px; z-index: -1; opacity: 0; filter: blur(12px); transition: opacity 0.4s ease;
     }
     @keyframes breatheGlow { 0% { opacity: 0.5; filter: blur(10px); } 100% { opacity: 1; filter: blur(18px); } }
-    
-    /* Active State Glow */
     .search-wrapper.active-search::before { animation: breatheGlow 1.5s alternate infinite ease-in-out; opacity: 1; }
 
     .search-icon {
@@ -80,14 +74,12 @@
     }
     .search-input::placeholder { color: var(--text-muted); }
     
-    /* Morph shape when results open */
     .search-wrapper.has-results .search-input {
       border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent;
       background: rgba(15, 15, 20, 0.95); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
     }
     .search-wrapper.active-search .search-input { background: rgba(15, 15, 20, 0.95); }
 
-    /* The Results Dropdown Segment */
     .search-dropdown {
       position: absolute; top: 100%; left: 0; width: 100%;
       background: rgba(15, 15, 20, 0.95); border: 1px solid var(--glass-border); border-top: none;
@@ -100,13 +92,11 @@
     .search-dropdown::-webkit-scrollbar { width: 6px; }
     .search-dropdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-    /* Result Items */
     .search-result-item {
       display: flex; align-items: center; padding: 12px 20px; gap: 16px;
       cursor: pointer; transition: background 0.1s; color: var(--text-main);
       border-left: 3px solid transparent; margin: 4px 8px; border-radius: 8px;
     }
-    /* Hover OR Keyboard Arrow Navigation Active State */
     .search-result-item:hover, .search-result-item.keyboard-active {
       background: rgba(0, 196, 204, 0.15); border-left: 3px solid var(--accent);
     }
@@ -118,7 +108,6 @@
     .sr-type { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; font-weight: 700;}
     .sr-empty { padding: 24px; text-align: center; color: var(--text-muted); font-size: 14px; }
 
-    /* --- DIRECT CANVA BUTTON --- */
     .btn-canva-direct {
       background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -130,7 +119,6 @@
       transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 196, 204, 0.2);
     }
 
-    /* --- BENTO BOX GRID --- */
     .dashboard {
       display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(320px, auto);
       gap: 24px; max-width: 1200px; margin: 0 auto 60px auto; padding: 0 40px; position: relative; z-index: 5;
@@ -151,7 +139,6 @@
 
     .card-title { font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; transform: translateZ(20px); }
 
-    /* 3D PRESS SELECT ANIMATION */
     @keyframes selectPop {
       0% { transform: scale(1) translateZ(15px); box-shadow: 0 0 0 rgba(0, 196, 204, 0); }
       50% { transform: scale(0.92) translateZ(0px); box-shadow: 0 0 20px rgba(0, 196, 204, 0.6); background: rgba(0, 196, 204, 0.2); }
@@ -159,13 +146,11 @@
     }
     .anim-select { animation: selectPop 0.3s cubic-bezier(0.1, 0.8, 0.3, 1) !important; }
 
-    /* BENTO POSITIONING */
     .card-recent { grid-column: span 2; height: 360px; }
     .card-quick { grid-column: span 1; grid-row: span 2; height: 100%; } 
     .card-themes { grid-column: span 1; height: 360px; }
     .card-uploads { grid-column: span 1; height: 360px; }
 
-    /* --- RECENT DESIGNS WIDGET --- */
     .recent-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 8px; transform: translateZ(15px); }
     .recent-item { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; }
     .recent-item:hover { border-color: var(--accent); transform: translateY(-4px) translateZ(15px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
@@ -173,7 +158,6 @@
     .recent-title { padding: 12px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
     .loading-state { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 14px; grid-column: 1 / -1; padding: 20px 0; }
 
-    /* --- QUICK CREATE WIDGET --- */
     .quick-create-grid { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; overflow-y: auto; padding-right: 4px; transform: translateZ(15px); }
     .quick-create-grid::-webkit-scrollbar { width: 6px; }
     .quick-create-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -181,7 +165,6 @@
     .qc-btn:hover { border-color: var(--accent); background: rgba(0, 196, 204, 0.1); box-shadow: 0 4px 15px rgba(0, 196, 204, 0.15); padding-left: 24px; }
     .qc-icon { font-size: 24px; }
 
-    /* --- UPLOADS & THEMES --- */
     .file-list { flex-grow: 1; overflow-y: auto; margin-bottom: 16px; padding-right: 8px; transform: translateZ(15px); }
     .file-list::-webkit-scrollbar { width: 6px; }
     .file-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -209,7 +192,6 @@
     .btn-subtle { background: none; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline; margin-top: 15px; text-align: center; transition: color 0.2s; transform: translateZ(15px); }
     .btn-subtle:hover { color: var(--accent); }
 
-    /* --- FOOTER & NAME EDITOR --- */
     .footer-bar { position: fixed; bottom: 20px; right: 30px; z-index: 100; }
     .edit-name-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(10px); color: var(--text-muted); padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
     .edit-name-btn:hover { background: rgba(255,255,255,0.1); color: white; border-color: var(--accent); }
@@ -220,6 +202,19 @@
     .modal-card input { width: 100%; box-sizing: border-box; padding: 12px; margin: 20px 0; background: #222; border: 1px solid #444; border-radius: 8px; color: white; font-size: 16px; text-align: center; }
     .modal-card input:focus { outline: none; border-color: var(--accent); }
     .btn-primary-modal { width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 14px; background: var(--time-grad); color: white; }
+
+    /* --- UPDATE BADGE --- */
+    #update-badge { position: fixed; bottom: 20px; left: 30px; z-index: 100; background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(10px); padding: 12px 16px; border-radius: 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: all 0.3s ease; }
+    #update-badge.hidden { transform: translateY(100px); opacity: 0; pointer-events: none; }
+    .update-icon { font-size: 20px; }
+    .update-text { display: flex; flex-direction: column; gap: 6px; width: 140px; }
+    #update-title { font-size: 12px; font-weight: 600; color: var(--text-main); white-space: nowrap; }
+    .update-progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+    #update-progress-fill { height: 100%; width: 0%; background: var(--time-grad); transition: width 0.2s linear; }
+    #update-install-btn { background: var(--time-grad); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+    #update-install-btn:hover { filter: brightness(1.2); }
+    #update-install-btn.hidden { display: none; }
+    .magnetic { transform-style: preserve-3d; will-change: transform; }
   </style>
 </head>
 <body tabindex="-1">
@@ -233,19 +228,19 @@
   <div class="search-wrapper" id="search-wrapper">
     <span class="search-icon">🔍</span>
     <input type="text" id="global-search" class="search-input" placeholder="Start typing to search your history and create a design..." autocomplete="off" spellcheck="false">
-    
-    <div class="search-dropdown hidden" id="search-dropdown">
-      </div>
+    <div class="search-dropdown hidden" id="search-dropdown"></div>
   </div>
 
-  <div style="text-align: center; margin-bottom: 40px; position: relative; z-index: 5;">
+  <div style="text-align: center; margin-bottom: 40px; position: relative; z-index: 5; display: flex; justify-content: center; gap: 16px;">
     <button class="btn-canva-direct magnetic" onclick="launchDesign('https://www.canva.com', 'Home', event)">
       🌐 Open Canva.com
+    </button>
+    <button class="btn-canva-direct magnetic" id="manual-update-btn" onclick="startUpdate()">
+      🔄 Force Update App
     </button>
   </div>
 
   <div class="dashboard">
-    
     <div class="glass-card card-recent">
       <div class="glare"></div>
       <h2 class="card-title">Workspace <span>🕒</span></h2>
@@ -257,8 +252,7 @@
     <div class="glass-card card-quick">
       <div class="glare"></div>
       <h2 class="card-title">Launchpad <span>🚀</span></h2>
-      <div class="quick-create-grid" id="quick-create-grid">
-        </div>
+      <div class="quick-create-grid" id="quick-create-grid"></div>
     </div>
 
     <div class="glass-card card-themes">
@@ -280,15 +274,23 @@
       <div class="glare"></div>
       <h2 class="card-title">Local Uploads ☁️</h2>
       <div class="file-list" id="file-list"></div>
-      <div>
-        <button class="btn-secondary" id="btn-open-folder">Open File Explorer</button>
-      </div>
+      <div><button class="btn-secondary" id="btn-open-folder">Open File Explorer</button></div>
     </div>
-
   </div>
 
   <div class="footer-bar">
     <button class="edit-name-btn" onclick="openNameModal()">📝 Edit Name</button>
+  </div>
+
+  <div id="update-badge" class="hidden">
+    <div class="update-icon">✨</div>
+    <div class="update-text">
+        <div id="update-title">Downloading Update...</div>
+        <div class="update-progress-bar">
+            <div id="update-progress-fill"></div>
+        </div>
+    </div>
+    <button id="update-install-btn" class="hidden" onclick="installUpdate()">Restart & Install</button>
   </div>
 
   <div id="name-modal" class="modal-overlay hidden">
@@ -306,19 +308,12 @@
     const os = require('os');
     const { shell, ipcRenderer } = require('electron'); 
 
-    // ==========================================
-    // 0. ZERO-CLICK AUTOFOCUS (Window Load Capture)
-    // ==========================================
     window.addEventListener('load', () => {
-      // Force Electron webview to grab OS keyboard focus automatically
       window.focus();
       document.body.focus();
     });
 
-    // ==========================================
-    // 1. DYNAMIC GREETING ENGINE (LOCAL JSON INTEGRATION)
-    // ==========================================
-    const dataPath = path.join(__dirname, 'other', 'data.json');
+    const dataPath = path.join(os.homedir(), 'Documents', 'BetterCanva', 'Data', 'data.json');
     let appData = {};
     if (fs.existsSync(dataPath)) {
       try { appData = JSON.parse(fs.readFileSync(dataPath, 'utf8')); } catch(e){}
@@ -365,7 +360,6 @@
     }
     triggerGreeting();
 
-    // Modal Logic & Secure JSON Update
     const modal = document.getElementById('name-modal');
     const nameInput = document.getElementById('name-input');
     window.openNameModal = () => { nameInput.value = userName; modal.classList.remove('hidden'); setTimeout(() => nameInput.focus(), 100); };
@@ -375,11 +369,9 @@
         userName = nameInput.value.trim(); 
         appData.userName = userName;
         
-        // Save to central /other/data.json
         if (!fs.existsSync(path.dirname(dataPath))) fs.mkdirSync(path.dirname(dataPath), { recursive: true });
         try { fs.writeFileSync(dataPath, JSON.stringify(appData, null, 2)); } catch(e){}
         
-        // Notify the main renderer to sync settings in memory
         ipcRenderer.sendToHost('update-user-name', userName);
         triggerGreeting(); 
       }
@@ -389,9 +381,6 @@
     modal.addEventListener('click', (e) => { if(e.target === modal) modal.classList.add('hidden'); });
     document.addEventListener('keydown', (e) => { if(e.key === 'Enter' && !modal.classList.contains('hidden')) saveName(); });
 
-    // ==========================================
-    // 2. 3D MAGNETIC PARALLAX ENGINE
-    // ==========================================
     document.querySelectorAll('.glass-card').forEach(card => {
       const glare = card.querySelector('.glare');
       card.addEventListener('mousemove', (e) => {
@@ -411,9 +400,6 @@
       });
     });
 
-    // ==========================================
-    // 3. GLOBAL COMMAND SEARCH ENGINE
-    // ==========================================
     const searchInput = document.getElementById('global-search');
     const searchWrapper = document.getElementById('search-wrapper');
     const searchDropdown = document.getElementById('search-dropdown');
@@ -424,7 +410,6 @@
     let currentSearchResults = [];
     let selectedSearchIndex = -1;
 
-    // Added Canva.com to the very top of the options
     const quickCreateOptions = [
       { title: 'Open Canva.com', url: 'https://www.canva.com', icon: '🌐', tags: ['home', 'canva', 'dashboard', 'website', 'login'] },
       { title: 'Video Studio', url: 'https://www.canva.com/create/videos/', icon: '🎬', tags: ['video', 'mp4', 'movie', 'clip'] },
@@ -435,7 +420,6 @@
       { title: 'Brand Logo', url: 'https://www.canva.com/create/logos/', icon: '🖼️', tags: ['branding', 'icon', 'symbol'] }
     ];
 
-    // Build Quick Create grid but skip the Canva.com generic link for the physical UI cards
     quickCreateOptions.forEach(opt => {
       if (opt.title !== 'Open Canva.com') {
         qcGrid.innerHTML += `<button class="qc-btn" onclick="launchDesign('${opt.url}', '${opt.title}', event)"><span class="qc-icon">${opt.icon}</span> ${opt.title}</button>`;
@@ -452,15 +436,12 @@
       }
 
       const isInput = document.activeElement === searchInput || document.activeElement.tagName === 'INPUT';
-      
-      // If typing a standard character and search isn't focused, focus it instantly
       if (!isInput && e.key.length === 1 && e.key.match(/[a-zA-Z0-9\s-_]/)) {
         searchInput.focus();
       }
     });
 
     function closeSearch() {
-      // Instantly wipe visuals and state
       searchBackdrop.classList.add('hidden');
       searchWrapper.classList.remove('has-results');
       searchWrapper.classList.remove('active-search');
@@ -595,9 +576,6 @@
       });
     }
 
-    // ==========================================
-    // 4. CORE IPC UTILITIES
-    // ==========================================
     window.applyDashboardTheme = function(themeId, event) { 
       if (event && event.currentTarget) {
         const el = event.currentTarget; el.classList.add('anim-select');
@@ -614,7 +592,6 @@
 
     window.toggleBanana = function() { ipcRenderer.sendToHost('toggle-banana'); };
 
-    // --- RECENT DESIGNS LOCAL TRACKER FETCH ---
     ipcRenderer.sendToHost('request-recent-designs');
 
     ipcRenderer.on('recent-designs-data', (event, data) => {
@@ -640,8 +617,7 @@
       });
     });
 
-    // --- UPLOADS LOGIC ---
-    const uploadFolder = path.join(__dirname, 'other', 'Uploads');
+    const uploadFolder = path.join(os.homedir(), 'Documents', 'BetterCanva', 'Uploads');
     function refreshFileList() {
       const fileListEl = document.getElementById('file-list');
       fileListEl.innerHTML = '';
@@ -663,7 +639,6 @@
     setInterval(refreshFileList, 2000);
     refreshFileList();
 
-    // --- MAGNETIC BUTTON PHYSICS (For the new direct Canva button) ---
     document.querySelectorAll('.magnetic').forEach(btn => {
       btn.addEventListener('mousemove', e => {
         const rect = btn.getBoundingClientRect();
@@ -675,6 +650,42 @@
         btn.style.transform = `translate(0px, 0px) scale(1)`;
       });
     });
+
+    // --- MANUAL AUTO-UPDATE LOGIC ---
+    window.startUpdate = function() {
+        const btn = document.getElementById('manual-update-btn');
+        btn.innerText = '⏳ Checking GitHub...';
+        btn.style.pointerEvents = 'none'; // Prevent double clicking
+        
+        ipcRenderer.sendToHost('start-update');
+
+        // Reset button visual after a few seconds just in case
+        setTimeout(() => {
+            btn.innerText = '🔄 Force Update App';
+            btn.style.pointerEvents = 'auto';
+        }, 5000);
+    };
+
+    const updateBadge = document.getElementById('update-badge');
+    const updateTitle = document.getElementById('update-title');
+    const updateProgressFill = document.getElementById('update-progress-fill');
+    const updateInstallBtn = document.getElementById('update-install-btn');
+
+    ipcRenderer.on('update-progress', (event, percent) => {
+        updateBadge.classList.remove('hidden');
+        updateProgressFill.style.width = `${percent}%`;
+        updateTitle.innerText = `Downloading Update: ${Math.round(percent)}%`;
+    });
+
+    ipcRenderer.on('update-downloaded', () => {
+        updateBadge.classList.remove('hidden');
+        document.querySelector('.update-text').style.display = 'none';
+        updateInstallBtn.classList.remove('hidden');
+    });
+
+    window.installUpdate = function() {
+        ipcRenderer.sendToHost('install-update');
+    };
 
   </script>
 </body>
